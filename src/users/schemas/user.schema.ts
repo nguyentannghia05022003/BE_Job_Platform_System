@@ -4,9 +4,7 @@ import { Role } from 'src/roles/schemas/role.schema';
 
 export type UserDocument = HydratedDocument<User>;
 
-@Schema({
-    timestamps: true
-})
+@Schema({ timestamps: true })
 export class User {
     @Prop()
     name: string;
@@ -29,7 +27,7 @@ export class User {
     @Prop({ type: Object })
     company: {
         _id: mongoose.Schema.Types.ObjectId;
-        email: string;
+        name: string;
     };
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Role.name })
@@ -42,19 +40,19 @@ export class User {
     createdBy: {
         _id: mongoose.Schema.Types.ObjectId;
         email: string;
-    };
+    }
 
     @Prop({ type: Object })
     updatedBy: {
         _id: mongoose.Schema.Types.ObjectId;
         email: string;
-    };
+    }
 
     @Prop({ type: Object })
-    deleteBy: {
+    deletedBy: {
         _id: mongoose.Schema.Types.ObjectId;
         email: string;
-    };
+    }
 
     @Prop()
     createdAt: Date;
@@ -63,10 +61,10 @@ export class User {
     updatedAt: Date;
 
     @Prop()
-    isDelete: boolean;
+    isDeleted: boolean;
 
     @Prop()
-    deleteAt: Date;
+    deletedAt: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

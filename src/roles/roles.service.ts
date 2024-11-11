@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-import { InjectModel } from '@nestjs/mongoose';
 import { Role, RoleDocument } from './schemas/role.schema';
+import { InjectModel } from '@nestjs/mongoose';
 import { SoftDeleteModel } from 'soft-delete-plugin-mongoose';
-import { IUser } from 'src/users/dto/users.interface';
-import mongoose from 'mongoose';
 import aqp from 'api-query-params';
+import mongoose from 'mongoose';
+import { IUser } from 'src/users/dto/users.interface';
+import { ADMIN_ROLE } from 'src/databases/sample';
 
 @Injectable()
 export class RolesService {
@@ -23,13 +24,14 @@ export class RolesService {
       throw new BadRequestException(`Role với name="${name}" đã tồn tại!`)
     }
 
-    let newRole = await this.roleModel.create({
+    const newRole = await this.roleModel.create({
       name, description, isActive, permissions,
       createdBy: {
         _id: user._id,
         email: user.email
       }
     })
+
     return {
       _id: newRole?._id,
       createdAt: newRole?.createdAt
@@ -37,20 +39,23 @@ export class RolesService {
   }
 
   async findAll(currentPage: number, limit: number, qs: string) {
-    const { filter, sort, projection, population } = aqp(qs);
+    const { filter, sort, population, projection } = aqp(qs);
     delete filter.current;
     delete filter.pageSize;
+
     let offset = (+currentPage - 1) * (+limit);
     let defaultLimit = +limit ? +limit : 10;
 
     const totalItems = (await this.roleModel.find(filter)).length;
     const totalPages = Math.ceil(totalItems / defaultLimit);
 
+
     const result = await this.roleModel.find(filter)
       .skip(offset)
       .limit(defaultLimit)
       .sort(sort as any)
       .populate(population)
+      .select(projection as any)
       .exec();
 
     return {
@@ -62,12 +67,12 @@ export class RolesService {
       },
       result //kết quả query
     }
-
   }
 
   async findOne(id: string) {
-    if (!mongoose.Types.ObjectId.isValid(id))
-      throw new BadRequestException(`Not found permission with id=${id}`)
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException("not found role")
+    }
 
     return (await this.roleModel.findById(id)).populate({
       path: "permissions",
@@ -75,40 +80,40 @@ export class RolesService {
     });
   }
 
-  async update(id: string, updateRoleDto: UpdateRoleDto, user: IUser) {
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+  async update(_id: string, updateRoleDto: UpdateRoleDto, user: IUser) {
+    if (!mongoose.Types.ObjectId.isValid(_id)) {
       throw new BadRequestException("not found role")
     }
-    //const { name } = updateRoleDto;
+
+    const { name, description, isActive, permissions } = updateRoleDto;
+
     // const isExist = await this.roleModel.findOne({ name });
     // if (isExist) {
-    //   throw new BadRequestException(`Role với name="${name}" đã tồn tại!`)
+    //   throw new BadRequestException(`Role với name=${name} đã tồn tại!`)
     // }
 
-    let update = await this.roleModel.updateOne({ _id: id }, {
-      ...updateRoleDto,
-      updatedBy: {
-        _id: user._id,
-        email: user.email
-      }
-    });
-    return update
+    const updated = await this.roleModel.updateOne(
+      { _id },
+      {
+        name, description, isActive, permissions,
+        updatedBy: {
+          _id: user._id,
+          email: user.email
+        }
+      });
+
+    return updated;
   }
 
   async remove(id: string, user: IUser) {
-    if (!mongoose.Types.ObjectId.isValid(id))
-      throw new BadRequestException(`Not found role`)
-
     const foundRole = await this.roleModel.findById(id);
-    if (foundRole.name === "ADMIN") {
-      throw new BadRequestException(`Not Delete Role Admin`)
+    if (foundRole.name === ADMIN_ROLE) {
+      throw new BadRequestException("Không thể xóa role ADMIN");
     }
-
     await this.roleModel.updateOne(
       { _id: id },
       {
-        deleteBy: {
+        deletedBy: {
           _id: user._id,
           email: user.email
         }
