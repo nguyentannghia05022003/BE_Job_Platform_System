@@ -13,6 +13,8 @@ import { ResumesModule } from './resumes/resumes.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { RolesModule } from './roles/roles.module';
 import { DatabasesModule } from './databases/databases.module';
+import { SubscribersModule } from './subscribers/subscribers.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [//MongooseModule.forRoot('mongodb+srv://root:eUOOfPVkHADTwlL5@cluster0.rj8hf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'),
@@ -41,7 +43,9 @@ import { DatabasesModule } from './databases/databases.module';
     ResumesModule,
     PermissionsModule,
     RolesModule,
-    DatabasesModule
+    DatabasesModule,
+    SubscribersModule,
+    MailModule
   ],
   controllers: [AppController],
   providers: [AppService],

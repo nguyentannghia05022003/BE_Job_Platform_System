@@ -75,6 +75,7 @@ export class UsersService {
 
     //fetch user role
     const userRole = await this.roleModel.findOne({ name: USER_ROLE });
+
     const hashPassword = this.getHashPassword(password);
     let newRegister = await this.userModel.create({
       name, email,
@@ -149,7 +150,7 @@ export class UsersService {
       throw new BadRequestException(`Not found User`)
 
     const foundUser = await this.userModel.findById(id);
-    if (foundUser.email === "admin@gmail.com") {
+    if (foundUser && foundUser.email === "admin@gmail.com") {
       throw new BadRequestException(`Not Delete Account Admin`)
     }
 

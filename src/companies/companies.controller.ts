@@ -31,6 +31,7 @@ export class CompaniesController {
   }
 
   @Get(':id')
+  @ResponseMessage("Fetch Company by id")
   @Public()
   findOne(
     @Param('id') id: string

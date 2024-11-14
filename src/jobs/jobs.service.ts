@@ -27,7 +27,7 @@ export class JobsService {
       isActive,
       createdBy: {
         _id: user._id,
-        email: user.email
+        email: user.email,
       }
     })
 

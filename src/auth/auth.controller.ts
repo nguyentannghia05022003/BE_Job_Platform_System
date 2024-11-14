@@ -32,7 +32,7 @@ export class AuthController {
         return this.authService.register(registerUserDto);
     }
 
-    @ResponseMessage("Get User Information")
+    @ResponseMessage("Get user information")
     @Get('/account')
     async handleGetAccount(@User() user: IUser) {
         const temp = await this.rolesService.findOne(user.role._id) as any;
