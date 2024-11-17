@@ -15,9 +15,17 @@ import { RolesModule } from './roles/roles.module';
 import { DatabasesModule } from './databases/databases.module';
 import { SubscribersModule } from './subscribers/subscribers.module';
 import { MailModule } from './mail/mail.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { HealthModule } from './health/health.module';
 
 @Module({
-  imports: [//MongooseModule.forRoot('mongodb+srv://root:eUOOfPVkHADTwlL5@cluster0.rj8hf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'),
+  imports: [
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot({
+      ttl: 60,
+      limit: 2,
+    }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -45,7 +53,8 @@ import { MailModule } from './mail/mail.module';
     RolesModule,
     DatabasesModule,
     SubscribersModule,
-    MailModule
+    MailModule,
+    HealthModule
   ],
   controllers: [AppController],
   providers: [AppService],
