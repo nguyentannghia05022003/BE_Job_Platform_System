@@ -134,14 +134,16 @@ export class UsersService {
     }).populate({ path: "role", select: { name: 1 } })
   }
 
-  async update(updateUserDto: UpdateUserDto, user: IUser) {
-    const updated = await this.userModel.updateOne({ _id: updateUserDto._id }, {
-      ...updateUserDto,
-      updatedBy: {
-        _id: user._id,
-        email: user.email
-      }
-    });
+  async update(id: string, updateUserDto: UpdateUserDto, user: IUser) {
+    const updated = await this.userModel.updateOne(
+      { _id: id },
+      {
+        ...updateUserDto,
+        updatedBy: {
+          _id: user._id,
+          email: user.email
+        }
+      });
     return updated;
   }
 
