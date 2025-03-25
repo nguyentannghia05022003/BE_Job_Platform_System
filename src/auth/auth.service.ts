@@ -17,7 +17,7 @@ export class AuthService {
         private rolesService: RolesService
     ) { }
 
-    //ussername/ pass là 2 tham số thư viện passport nó ném về
+    //username/ pass là 2 tham số thư viện passport nó ném về
     async validateUser(username: string, pass: string): Promise<any> {
         const user = await this.usersService.findOneByUsername(username);
         if (user) {
