@@ -40,7 +40,8 @@ import { HealthModule } from './health/health.module';
     }),
 
     ConfigModule.forRoot({
-      isGlobal: true
+      isGlobal: true,
+      envFilePath: '.env',
     }),
 
     UsersModule,
