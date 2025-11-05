@@ -36,6 +36,12 @@ export class User {
     @Prop()
     refreshToken: string;
 
+    @Prop()
+    otp: string; // Thêm trường OTP
+
+    @Prop()
+    otpExpiry: Date; // Thêm trường thời gian hết hạn OTP
+
     @Prop({ type: Object })
     createdBy: {
         _id: mongoose.Schema.Types.ObjectId;

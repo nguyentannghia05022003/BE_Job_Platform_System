@@ -14,7 +14,6 @@ import { USER_ROLE } from 'src/databases/sample';
 
 @Injectable()
 export class UsersService {
-
   constructor(
     @InjectModel(UserM.name)
     private userModel: SoftDeleteModel<UserDocument>,
@@ -24,67 +23,65 @@ export class UsersService {
   ) { }
 
   getHashPassword = (password: string) => {
-    var salt = genSaltSync(10);
-    var hash = hashSync(password, salt);
+    const salt = genSaltSync(10);
+    const hash = hashSync(password, salt);
     return hash;
-  }
+  };
 
   isValidPassword(password: string, hash: string) {
-    return compareSync(password, hash); // false
-
+    return compareSync(password, hash);
   }
 
   async create(createUserDto: CreateUserDto, @User() user: IUser) {
-    const {
-      name, email, password, age,
-      gender, address, role, company
-    }
-      = createUserDto;
+    const { name, email, password, age, gender, address, role, company } = createUserDto;
 
-    //add logic check email
     const isExist = await this.userModel.findOne({ email });
     if (isExist) {
-      throw new BadRequestException(`Email: ${email} đã tồn tại trên hệ thống. Vui lòng sử dụng email khác.`)
+      throw new BadRequestException(`Email: ${email} đã tồn tại trên hệ thống. Vui lòng sử dụng email khác.`);
     }
 
     const hashPassword = this.getHashPassword(password);
 
-    let newUser = await this.userModel.create({
-      name, email,
+    const newUser = await this.userModel.create({
+      name,
+      email,
       password: hashPassword,
       age,
-      gender, address, role, company,
+      gender,
+      address,
+      role,
+      company,
       createdBy: {
         _id: user._id,
-        email: user.email
-      }
-    })
+        email: user.email,
+      },
+    });
     return {
       _id: newUser?._id,
-      createdAt: newUser?.createdAt
+      createdAt: newUser?.createdAt,
     };
   }
 
   async register(user: RegisterUserDto) {
     const { name, email, password, age, gender, address } = user;
-    //add logic check email
+
     const isExist = await this.userModel.findOne({ email });
     if (isExist) {
-      throw new BadRequestException(`Email: ${email} đã tồn tại trên hệ thống. Vui lòng sử dụng email khác.`)
+      throw new BadRequestException(`Email: ${email} đã tồn tại trên hệ thống. Vui lòng sử dụng email khác.`);
     }
 
-    //fetch user role
     const userRole = await this.roleModel.findOne({ name: USER_ROLE });
 
     const hashPassword = this.getHashPassword(password);
-    let newRegister = await this.userModel.create({
-      name, email,
+    const newRegister = await this.userModel.create({
+      name,
+      email,
       password: hashPassword,
       age,
       gender,
       address,
-      role: userRole?._id
-    })
+      role: userRole?._id,
+    });
     return newRegister;
   }
 
@@ -92,13 +89,14 @@ export class UsersService {
     const { filter, sort, projection, population } = aqp(qs);
     delete filter.current;
     delete filter.pageSize;
-    let offset = (+currentPage - 1) * (+limit);
-    let defaultLimit = +limit ? +limit : 10;
+    const offset = (+currentPage - 1) * (+limit);
+    const defaultLimit = +limit ? +limit : 10;
 
     const totalItems = (await this.userModel.find(filter)).length;
     const totalPages = Math.ceil(totalItems / defaultLimit);
 
-    const result = await this.userModel.find(filter)
+    const result = await this.userModel
+      .find(filter)
       .skip(offset)
       .limit(defaultLimit)
       .sort(sort as any)
@@ -108,52 +106,62 @@ export class UsersService {
 
     return {
       meta: {
-        current: currentPage, //trang hiện tại
-        pageSize: limit, //số lượng bản ghi đã lấy
-        pages: totalPages,  //tổng số trang với điều kiện query
-        total: totalItems // tổng số phần tử (số bản ghi)
+        current: currentPage,
+        pageSize: limit,
+        pages: totalPages,
+        total: totalItems,
       },
-      result //kết quả query
-    }
-
+      result,
+    };
   }
 
   async findOne(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id))
-      throw new BadRequestException(`Not found user`)
+      throw new BadRequestException(`Not found user`);
 
-    return await this.userModel.findOne({
-      _id: id
-    }).select("-password") //exclude >< include
-      .populate({ path: "role", select: { name: 1, _id: 1 } })
+    return await this.userModel
+      .findOne({ _id: id })
+      .select('-password')
+      .populate({ path: 'role', select: { name: 1, _id: 1 } });
   }
 
   findOneByUsername(username: string) {
-    return this.userModel.findOne({
-      email: username
-    }).populate({ path: "role", select: { name: 1 } })
+    return this.userModel
+      .findOne({ email: username })
+      .populate({ path: 'role', select: { name: 1 } });
+  }
+
+  async findOneById(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id))
+      throw new BadRequestException(`Not found user`);
+
+    return await this.userModel.findOne({ _id: id });
   }
 
   async update(id: string, updateUserDto: UpdateUserDto, user: IUser) {
+    if (!mongoose.Types.ObjectId.isValid(id))
+      throw new BadRequestException(`Not found User`);
+
     const updated = await this.userModel.updateOne(
       { _id: id },
       {
         ...updateUserDto,
         updatedBy: {
           _id: user._id,
-          email: user.email
-        }
-      });
+          email: user.email,
+        },
+      },
+    );
     return updated;
   }
 
   async remove(id: string, user: IUser) {
     if (!mongoose.Types.ObjectId.isValid(id))
-      throw new BadRequestException(`Not found User`)
+      throw new BadRequestException(`Not found User`);
 
     const foundUser = await this.userModel.findById(id);
-    if (foundUser && foundUser.email === "admin@gmail.com") {
-      throw new BadRequestException(`Not Delete Account Admin`)
+    if (foundUser && foundUser.email === 'admin@gmail.com') {
+      throw new BadRequestException(`Not Delete Account Admin`);
     }
 
     await this.userModel.updateOne(
@@ -161,26 +169,97 @@ export class UsersService {
       {
         deleteBy: {
           _id: user._id,
-          email: user.email
-        }
-      })
-    return this.userModel.softDelete({
-      _id: id
-    })
+          email: user.email,
+        },
+      },
+    );
+    return this.userModel.softDelete({ _id: id });
   }
 
   updateUserToken = async (refreshToken: string, _id: string) => {
-    return await this.userModel.updateOne(
-      { _id },
-      { refreshToken }
-    )
-  }
+    return await this.userModel.updateOne({ _id }, { refreshToken });
+  };
 
   findUserByToken = async (refreshToken: string) => {
-    return await this.userModel.findOne({ refreshToken })
-      .populate({
-        path: "role",
-        select: { name: 1 }
-      })
+    return await this.userModel
+      .findOne({ refreshToken })
+      .populate({ path: 'role', select: { name: 1 } });
+  };
+
+  async findOneByEmail(email: string): Promise<UserDocument> {
+    return await this.userModel.findOne({ email });
   }
+
+  async saveOtp(_id: string, otp: string, otpExpiry: Date): Promise<void> {
+    await this.userModel.updateOne({ _id }, { otp, otpExpiry });
+  }
+
+  async findUserByOtp(otp: string): Promise<UserDocument> {
+    return await this.userModel.findOne({ otp });
+  }
+
+  async clearOtp(userId: string): Promise<void> {
+    await this.userModel.updateOne({ _id: userId }, { otp: null, otpExpiry: null });
+  }
+
+  async updateUserPassword(id: string, newPassword: string): Promise<void> {
+    const hashPassword = this.getHashPassword(newPassword);
+    await this.userModel.updateOne({ _id: id }, { password: hashPassword });
+  }
+
+  // async register(user: RegisterUserDto) {
+  //   const { name, email, password, age, gender, address } = user;
+
+  //   // Kiểm tra email đã tồn tại
+  //   const isExist = await this.userModel.findOne({ email });
+  //   if (isExist) {
+  //     throw new BadRequestException(`Email: ${email} đã tồn tại trên hệ thống. Vui lòng sử dụng email khác.`);
+  //   }
+
+  //   const userRole = await this.roleModel.findOne({ name: USER_ROLE });
+  //   const hashPassword = this.getHashPassword(password);
+
+  //   // Tạo user mới với isVerified = false
+  //   const newRegister = await this.userModel.create({
+  //     name,
+  //     email,
+  //     password: hashPassword,
+  //     age,
+  //     gender,
+  //     address,
+  //     role: userRole?._id,
+  //     isVerified: false, // Chưa xác nhận
+  //   });
+
+  //   // Tạo và lưu OTP
+  //   const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  //   const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // Hết hạn sau 10 phút
+  //   await this.saveOtp(newRegister._id.toString(), otp, otpExpiry);
+
+  //   return { _id: newRegister._id, email, otp }; // Trả về để gửi OTP qua email
+  // }
+
+  // async verifyOtp(email: string, otp: string): Promise<void> {
+  //   const user = await this.userModel.findOne({ email, otp });
+  //   if (!user) {
+  //     throw new BadRequestException('OTP không hợp lệ hoặc email không đúng');
+  //   }
+
+  //   const now = new Date();
+  //   if (now > user.otpExpiry) {
+  //     throw new BadRequestException('OTP đã hết hạn');
+  //   }
+
+  //   // Cập nhật trạng thái xác nhận
+  //   await this.userModel.updateOne(
+  //     { _id: user._id },
+  //     { isVerified: true, otp: null, otpExpiry: null },
+  //   );
+  // }
+
+  // findOneByUsername(username: string) {
+  //   return this.userModel
+  //     .findOne({ email: username })
+  //     .populate({ path: 'role', select: { name: 1 } });
+  // }
 }
